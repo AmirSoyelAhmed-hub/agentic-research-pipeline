@@ -1,9 +1,22 @@
+import os
 from pathlib import Path
 from typing import TypedDict, List
 
+from dotenv import load_dotenv
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_chroma import Chroma
 from langgraph.graph import StateGraph, END
+from langfuse import Langfuse
+from langfuse.langchain import CallbackHandler
+
+load_dotenv()
+
+langfuse = Langfuse(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+    host=os.getenv("LANGFUSE_HOST"),
+)
+langfuse_handler = CallbackHandler()
 
 CHROMA_PATH = Path(__file__).parent.parent / "data" / "chroma"
 
@@ -69,7 +82,10 @@ research_agent = graph.compile()
 
 
 if __name__ == "__main__":
-    result = research_agent.invoke({"question": "What are recent approaches to reward shaping in RL?"})
+    result = research_agent.invoke(
+        {"question": "What are recent approaches to reward shaping in RL?"},
+        config={"callbacks": [langfuse_handler]},
+    )
     print(result["answer"])
     print("\n--- Sources ---")
     for c in result["retrieved_chunks"]:
