@@ -15,7 +15,9 @@ langfuse = Langfuse(
     public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
     secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
     host=os.getenv("LANGFUSE_HOST"),
+    timeout=30,
 )
+
 langfuse_handler = CallbackHandler()
 
 CHROMA_PATH = Path(__file__).parent.parent / "data" / "chroma"
@@ -57,8 +59,13 @@ def generate(state: AgentState) -> AgentState:
     )
 
     prompt = f"""You are a research assistant summarizing recent reinforcement learning papers.
-Answer the question using ONLY the context below. Cite paper titles in your answer.
-If the context doesn't contain a good answer, say so honestly.
+Answer the question using ONLY the context below.
+
+STRICT RULES:
+- Cite papers using ONLY their exact title in square brackets, e.g. [Paper Title Here]
+- NEVER invent author names, years, or arXiv IDs — none are provided in the context, so do not fabricate them
+- If the context doesn't contain a good answer, say so honestly
+- Do not add any citation details beyond the paper title
 
 Context:
 {context}
